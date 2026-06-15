@@ -1,121 +1,114 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { ColumnDef } from '@tanstack/react-table'
 import { DataTable } from '@/components/ui/data-table'
-import { useMuridList, useCreateMurid } from '@/hooks/useMurid'
+import { useMuridList, useCreateMurid, useUpdateMurid, useDeleteMurid, useMuridDetail } from '@/hooks/useMurid'
 import { Murid, MuridStatus } from '@/types/murid'
 import { MuridFormData } from '@/lib/schemas/murid'
 import MuridForm from '@/components/murid/MuridForm'
+import { MuridDetail } from '@/components/murid/MuridDetail'
+import { getMuridColumns, STATUS_LABEL } from '@/components/murid/muridColumns'
+import { DeleteDialog } from '@/components/ui/delete-dialog'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
-type Tab = 'daftar' | 'tambah'
+type Tab = 'daftar' | 'form'
+type Mode = 'tambah' | 'edit' | 'detail'
 
-const STATUS_LABEL: Record<MuridStatus, string> = {
-  aktif: 'Aktif',
-  nonaktif: 'Nonaktif',
-  alumni: 'Alumni',
-  pindah: 'Pindah',
+function getMuridFotoUrl(murid: Murid | undefined | null): string | null {
+  if (!murid) return null
+  const raw = murid.foto_url ?? (murid.foto ? `${process.env.NEXT_PUBLIC_API_URL}/storage/${murid.foto}` : null)
+  if (!raw) return null
+  try { return new URL(raw).pathname } catch { return raw }
 }
 
-const STATUS_CLASS: Record<MuridStatus, string> = {
-  aktif: 'bg-green-100 text-green-700',
-  nonaktif: 'bg-zinc-100 text-zinc-500',
-  alumni: 'bg-blue-100 text-blue-700',
-  pindah: 'bg-orange-100 text-orange-700',
+function toFormData(formData: MuridFormData, method?: string): FormData {
+  const fd = new FormData()
+  if (method) fd.append('_method', method)
+  Object.entries(formData).forEach(([key, value]) => {
+    if (key === 'foto' && value instanceof File) {
+      fd.append('foto', value)
+    } else if (key === 'wali' && Array.isArray(value)) {
+      value.forEach((wali, i) => {
+        Object.entries(wali).forEach(([wKey, wVal]) => {
+          fd.append(`wali[${i}][${wKey}]`, typeof wVal === 'boolean' ? (wVal ? '1' : '0') : String(wVal ?? ''))
+        })
+      })
+    } else if (value !== undefined && value !== null) {
+      fd.append(key, String(value))
+    }
+  })
+  return fd
 }
 
 export default function MuridPage() {
-  const router = useRouter()
   const [tab, setTab] = useState<Tab>('daftar')
+  const [mode, setMode] = useState<Mode>('tambah')
+  const [selected, setSelected] = useState<Murid | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Murid | null>(null)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<MuridStatus | ''>('')
   const [page, setPage] = useState(1)
 
   const { data, isLoading } = useMuridList({ search, status: status || undefined, page })
-  const { mutate: createMurid, isPending } = useCreateMurid()
+  const { mutate: createMurid, isPending: isCreating } = useCreateMurid()
+  const { mutate: updateMurid, isPending: isUpdating } = useUpdateMurid(selected?.id ?? 0)
+  const { mutate: deleteMurid, isPending: isDeleting } = useDeleteMurid()
+  const { data: muridDetail, isLoading: isLoadingDetail } = useMuridDetail(
+    selected?.id ?? 0,
+    { enabled: tab === 'form' && (mode === 'detail' || mode === 'edit') }
+  )
+
+  const openCreate = () => { setMode('tambah'); setSelected(null); setTab('form') }
+  const openEdit = (m: Murid) => { setMode('edit'); setSelected(m); setTab('form') }
+  const openDetail = (m: Murid) => { setMode('detail'); setSelected(m); setTab('form') }
+  const goBack = () => { setTab('daftar'); setSelected(null) }
+
+  const tabLabel = tab === 'form'
+    ? mode === 'tambah' ? 'Tambah Murid'
+      : mode === 'edit' ? 'Edit Murid'
+      : 'Detail Murid'
+    : null
 
   const handleCreate = (formData: MuridFormData) => {
-    const fd = new FormData()
-    Object.entries(formData).forEach(([key, value]) => {
-      if (key === 'foto' && value instanceof File) {
-        fd.append('foto', value)
-      } else if (key === 'wali' && Array.isArray(value)) {
-        value.forEach((wali, i) => {
-          Object.entries(wali).forEach(([wKey, wVal]) => {
-            const serialized = typeof wVal === 'boolean' ? (wVal ? '1' : '0') : String(wVal ?? '')
-            fd.append(`wali[${i}][${wKey}]`, serialized)
-          })
-        })
-      } else if (value !== undefined && value !== null) {
-        fd.append(key, String(value))
-      }
+    createMurid(toFormData(formData), {
+      onSuccess: () => { toast.success('Murid berhasil ditambahkan'); goBack(); setPage(1) },
+      onError: () => toast.error('Gagal menambahkan murid, coba lagi'),
     })
+  }
 
-    createMurid(fd, {
+  const handleUpdate = (formData: MuridFormData) => {
+    updateMurid(toFormData(formData, 'PUT'), {
+      onSuccess: () => { toast.success('Murid berhasil diperbarui'); goBack() },
+      onError: () => toast.error('Gagal memperbarui murid, coba lagi'),
+    })
+  }
+
+  const handleDelete = (m: Murid) => setDeleteTarget(m)
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return
+    deleteMurid(deleteTarget.id, {
       onSuccess: () => {
-        toast.success('Murid berhasil ditambahkan')
-        setTab('daftar')
-        setPage(1)
+        toast.success('Murid berhasil dihapus')
+        setDeleteTarget(null)
+        if (tab === 'form') goBack()
       },
       onError: () => {
-        toast.error('Gagal menambahkan murid, coba lagi')
+        toast.error('Gagal menghapus murid')
+        setDeleteTarget(null)
       },
     })
   }
 
-  const columns: ColumnDef<Murid>[] = [
-    {
-      accessorKey: 'nama',
-      header: 'Nama',
-      cell: ({ row }) => (
-        <div className="flex items-center gap-3">
-          {row.original.foto_url ? (
-            <img
-              src={row.original.foto_url}
-              alt={row.original.nama}
-              className="size-8 rounded-full object-cover shrink-0"
-            />
-          ) : (
-            <div className="size-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold shrink-0">
-              {row.original.nama[0]?.toUpperCase()}
-            </div>
-          )}
-          <span className="font-medium">{row.original.nama}</span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'jenis_kelamin',
-      header: 'JK',
-      cell: ({ getValue }) => getValue<string>() === 'L' ? 'Laki-laki' : 'Perempuan',
-    },
-    {
-      accessorKey: 'tanggal_lahir',
-      header: 'Tanggal Lahir',
-      cell: ({ getValue }) => (
-        <span className="text-muted-foreground">{getValue<string>()}</span>
-      ),
-    },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: ({ getValue }) => {
-        const s = getValue<MuridStatus>()
-        return (
-          <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full', STATUS_CLASS[s])}>
-            {STATUS_LABEL[s]}
-          </span>
-        )
-      },
-    },
-  ]
+  const columns = getMuridColumns({
+    onDetail: openDetail,
+    onEdit: openEdit,
+    onDelete: handleDelete,
+  })
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div>
         <h1 className="text-xl font-semibold">Murid</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
@@ -123,25 +116,31 @@ export default function MuridPage() {
         </p>
       </div>
 
-      {/* Tabs */}
       <div className="flex border-b border-border">
-        {(['daftar', 'tambah'] as Tab[]).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={cn(
-              'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors',
-              tab === t
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            )}
-          >
-            {t === 'daftar' ? 'Daftar Murid' : 'Tambah Murid'}
-          </button>
-        ))}
+        <button
+          onClick={goBack}
+          className={cn(
+            'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors',
+            tab === 'daftar'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          )}
+        >
+          Daftar Murid
+        </button>
+        <button
+          onClick={openCreate}
+          className={cn(
+            'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors',
+            tab === 'form'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          )}
+        >
+          {tabLabel ?? 'Tambah Murid'}
+        </button>
       </div>
 
-      {/* Daftar Tab */}
       {tab === 'daftar' && (
         <div className="space-y-4">
           <div className="flex gap-3 flex-wrap">
@@ -158,22 +157,16 @@ export default function MuridPage() {
               className="h-9 border border-border rounded-lg px-3 text-sm bg-background outline-none focus:border-ring transition-colors"
             >
               <option value="">Semua status</option>
-              <option value="aktif">Aktif</option>
-              <option value="nonaktif">Nonaktif</option>
-              <option value="alumni">Alumni</option>
-              <option value="pindah">Pindah</option>
+              {(Object.entries(STATUS_LABEL) as [MuridStatus, string][]).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
             </select>
             <span className="ml-auto text-sm text-muted-foreground self-center">
               {data?.total ?? 0} murid
             </span>
           </div>
 
-          <DataTable
-            columns={columns}
-            data={data?.data ?? []}
-            isLoading={isLoading}
-            onRowClick={(row) => router.push(`/murid/${row.id}`)}
-          />
+          <DataTable columns={columns} data={data?.data ?? []} isLoading={isLoading} />
 
           {data && data.last_page > 1 && (
             <div className="flex items-center gap-2 justify-end">
@@ -184,9 +177,7 @@ export default function MuridPage() {
               >
                 Sebelumnya
               </button>
-              <span className="text-sm text-muted-foreground">
-                {page} / {data.last_page}
-              </span>
+              <span className="text-sm text-muted-foreground">{page} / {data.last_page}</span>
               <button
                 onClick={() => setPage((p) => Math.min(data.last_page, p + 1))}
                 disabled={page === data.last_page}
@@ -199,14 +190,58 @@ export default function MuridPage() {
         </div>
       )}
 
-      {/* Tambah Tab */}
-      {tab === 'tambah' && (
-        <MuridForm
-          onSubmit={handleCreate}
-          isLoading={isPending}
-          onCancel={() => setTab('daftar')}
+      {tab === 'form' && mode === 'tambah' && (
+        <MuridForm onSubmit={handleCreate} isLoading={isCreating} onCancel={goBack} />
+      )}
+
+      {tab === 'form' && mode === 'edit' && selected && (
+        isLoadingDetail ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="size-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (
+          <MuridForm
+            fotoUrl={getMuridFotoUrl(muridDetail) ?? getMuridFotoUrl(selected)}
+            defaultValues={{
+              nama: selected.nama,
+              jenis_kelamin: selected.jenis_kelamin,
+              tanggal_lahir: selected.tanggal_lahir.split('T')[0],
+              alamat: selected.alamat ?? '',
+              tanggal_masuk: selected.tanggal_masuk?.split('T')[0] ?? '',
+              status: selected.status,
+              wali: muridDetail?.wali_murid?.map((w) => ({
+                nama: w.nama,
+                hubungan: w.hubungan,
+                phone: w.phone,
+                pekerjaan: w.pekerjaan ?? '',
+                is_primary: w.is_primary,
+              })) ?? [],
+            }}
+            onSubmit={handleUpdate}
+            isLoading={isUpdating}
+            onCancel={goBack}
+          />
+        )
+      )}
+
+      {tab === 'form' && mode === 'detail' && selected && (
+        <MuridDetail
+          selected={selected}
+          muridDetail={muridDetail}
+          isLoadingDetail={isLoadingDetail}
+          onEdit={openEdit}
+          onDelete={handleDelete}
         />
       )}
+
+      <DeleteDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}
+        title={`Hapus murid "${deleteTarget?.nama}"?`}
+        description="Data murid tidak dapat dikembalikan setelah dihapus."
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+      />
     </div>
   )
 }

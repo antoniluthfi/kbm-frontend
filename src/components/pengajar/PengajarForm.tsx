@@ -103,7 +103,7 @@ export default function PengajarForm({ defaultValues, onSubmit, onCancel, isLoad
             </Field>
 
             <Field label="Tanggal Bergabung" error={errors.tanggal_bergabung?.message}>
-              <Input type="date" {...register('tanggal_bergabung')} />
+              <Input type="date" max={TODAY} {...register('tanggal_bergabung')} />
             </Field>
 
             <div className="col-span-2">

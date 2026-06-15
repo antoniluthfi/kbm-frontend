@@ -19,22 +19,21 @@ export const useMuridList = (filters: MuridFilters = {}) =>
     },
   })
 
-export const useMuridDetail = (id: number) =>
+export const useMuridDetail = (id: number, options?: { enabled?: boolean }) =>
   useQuery({
     queryKey: ['murid', id],
     queryFn: async () => {
       const { data } = await api.get<{ murid: Murid }>(`/api/murid/${id}`)
       return data.murid
     },
+    enabled: (options?.enabled ?? true) && id > 0,
   })
 
 export const useCreateMurid = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (payload: FormData) =>
-      api.post<{ murid: Murid }>('/api/murid', payload, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      }),
+      api.post<{ murid: Murid }>('/api/murid', payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['murid'] }),
   })
 }
@@ -43,9 +42,7 @@ export const useUpdateMurid = (id: number) => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (payload: FormData) =>
-      api.post<{ murid: Murid }>(`/api/murid/${id}?_method=PUT`, payload, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      }),
+      api.post<{ murid: Murid }>(`/api/murid/${id}?_method=PUT`, payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['murid'] }),
   })
 }

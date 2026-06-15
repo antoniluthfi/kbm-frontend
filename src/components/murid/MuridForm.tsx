@@ -16,6 +16,7 @@ import { Plus, Trash2, ImageIcon } from 'lucide-react'
 
 interface MuridFormProps {
   defaultValues?: Partial<MuridFormData>
+  fotoUrl?: string | null
   onSubmit: (data: MuridFormData) => void
   onCancel?: () => void
   isLoading?: boolean
@@ -31,13 +32,13 @@ function Field({ label, error, children }: { label: string; error?: string; chil
   )
 }
 
-const selectClass = "w-full h-8 border border-input rounded-lg px-2.5 text-sm bg-background outline-none focus:border-ring focus:ring-3 focus:ring-ring/50 transition-colors"
+const selectClass = "w-full h-8 border border-input rounded-lg px-2.5 text-sm bg-background outline-none focus:border-ring focus:ring-3 focus:ring-ring/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 
 const TODAY = new Date().toISOString().split('T')[0]
 
 const STEPS = ['Data Murid', 'Wali Murid']
 
-export default function MuridForm({ defaultValues, onSubmit, onCancel, isLoading }: MuridFormProps) {
+export default function MuridForm({ defaultValues, fotoUrl, onSubmit, onCancel, isLoading }: MuridFormProps) {
   const [step, setStep] = useState(0)
   const [fotoName, setFotoName] = useState<string | null>(null)
 
@@ -140,10 +141,16 @@ export default function MuridForm({ defaultValues, onSubmit, onCancel, isLoading
 
               <div className="col-span-2">
                 <Field label="Foto">
+                  {fotoUrl && !fotoName && (
+                    <div className="flex items-center gap-3 mb-2">
+                      <img src={fotoUrl} alt="Foto saat ini" className="size-10 rounded-full object-cover ring-2 ring-border shrink-0" />
+                      <span className="text-xs text-muted-foreground">Foto saat ini</span>
+                    </div>
+                  )}
                   <label className="flex items-center gap-3 h-9 w-full border border-input rounded-lg px-3 text-sm bg-background cursor-pointer hover:bg-muted/40 transition-colors">
                     <ImageIcon className="size-4 text-muted-foreground shrink-0" />
                     <span className={cn('truncate', fotoName ? 'text-foreground' : 'text-muted-foreground')}>
-                      {fotoName ?? 'Pilih foto (maks. 2MB, akan dikompresi otomatis)'}
+                      {fotoName ?? (fotoUrl ? 'Ganti foto...' : 'Pilih foto (maks. 2MB, akan dikompresi otomatis)')}
                     </span>
                     <input
                       type="file"

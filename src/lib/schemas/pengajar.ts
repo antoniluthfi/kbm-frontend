@@ -6,7 +6,10 @@ export const pengajarSchema = z.object({
   tanggal_lahir: z.string().optional(),
   alamat: z.string().optional(),
   pendidikan_terakhir: z.string().max(100).optional(),
-  tanggal_bergabung: z.string().min(1, 'Tanggal bergabung wajib diisi'),
+  tanggal_bergabung: z.string().min(1, 'Tanggal bergabung wajib diisi').refine(
+    (val) => val <= new Date().toISOString().split('T')[0],
+    'Tanggal bergabung tidak boleh melebihi hari ini'
+  ),
   is_aktif: z.boolean(),
 })
 

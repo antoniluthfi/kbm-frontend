@@ -1,84 +1,96 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { ColumnDef } from '@tanstack/react-table'
 import { DataTable } from '@/components/ui/data-table'
-import { usePengajarList, useCreatePengajar } from '@/hooks/usePengajar'
+import { usePengajarList, useCreatePengajar, useUpdatePengajar, useDeletePengajar, useTogglePengajarAktif } from '@/hooks/usePengajar'
 import { Pengajar } from '@/types/pengajar'
 import { PengajarFormData } from '@/lib/schemas/pengajar'
 import PengajarForm from '@/components/pengajar/PengajarForm'
+import { PengajarDetail } from '@/components/pengajar/PengajarDetail'
+import { getPengajarColumns } from '@/components/pengajar/pengajarColumns'
+import { DeleteDialog } from '@/components/ui/delete-dialog'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
-type Tab = 'daftar' | 'tambah'
+type Tab = 'daftar' | 'form'
+type Mode = 'tambah' | 'edit' | 'detail'
 
 export default function PengajarPage() {
-  const router = useRouter()
   const [tab, setTab] = useState<Tab>('daftar')
+  const [mode, setMode] = useState<Mode>('tambah')
+  const [selected, setSelected] = useState<Pengajar | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Pengajar | null>(null)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
 
   const { data, isLoading } = usePengajarList({ search, page })
-  const { mutate: createPengajar, isPending } = useCreatePengajar()
+  const { mutate: createPengajar, isPending: isCreating } = useCreatePengajar()
+  const { mutate: updatePengajar, isPending: isUpdating } = useUpdatePengajar(selected?.id ?? 0)
+  const { mutate: deletePengajar, isPending: isDeleting } = useDeletePengajar()
+  const { mutate: toggleAktif, isPending: isToggling } = useTogglePengajarAktif()
+
+  const openCreate = () => { setMode('tambah'); setSelected(null); setTab('form') }
+  const openEdit = (p: Pengajar) => { setMode('edit'); setSelected(p); setTab('form') }
+  const openDetail = (p: Pengajar) => { setMode('detail'); setSelected(p); setTab('form') }
+  const goBack = () => { setTab('daftar'); setSelected(null) }
+
+  const tabLabel = tab === 'form'
+    ? mode === 'tambah' ? 'Tambah Pengajar'
+      : mode === 'edit' ? 'Edit Pengajar'
+      : 'Detail Pengajar'
+    : null
 
   const handleCreate = (formData: PengajarFormData) => {
     createPengajar(formData, {
+      onSuccess: () => { toast.success('Pengajar berhasil ditambahkan'); goBack(); setPage(1) },
+      onError: () => toast.error('Gagal menambahkan pengajar, coba lagi'),
+    })
+  }
+
+  const handleUpdate = (formData: PengajarFormData) => {
+    updatePengajar(formData, {
+      onSuccess: () => { toast.success('Pengajar berhasil diperbarui'); goBack() },
+      onError: () => toast.error('Gagal memperbarui pengajar, coba lagi'),
+    })
+  }
+
+  const handleDelete = (p: Pengajar) => setDeleteTarget(p)
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return
+    deletePengajar(deleteTarget.id, {
       onSuccess: () => {
-        toast.success('Pengajar berhasil ditambahkan')
-        setTab('daftar')
-        setPage(1)
+        toast.success('Pengajar berhasil dihapus')
+        setDeleteTarget(null)
+        if (tab === 'form') goBack()
       },
       onError: () => {
-        toast.error('Gagal menambahkan pengajar, coba lagi')
+        toast.error('Gagal menghapus pengajar')
+        setDeleteTarget(null)
       },
     })
   }
 
-  const columns: ColumnDef<Pengajar>[] = [
-    {
-      accessorKey: 'user.name',
-      header: 'Nama',
-      cell: ({ row }) => (
-        <span className="font-medium">{row.original.user?.name ?? '-'}</span>
-      ),
-    },
-    {
-      accessorKey: 'user.email',
-      header: 'Email',
-      cell: ({ row }) => (
-        <span className="text-muted-foreground">{row.original.user?.email ?? '-'}</span>
-      ),
-    },
-    {
-      accessorKey: 'jenis_kelamin',
-      header: 'JK',
-      cell: ({ getValue }) => getValue<string>() === 'L' ? 'Laki-laki' : 'Perempuan',
-    },
-    {
-      accessorKey: 'tanggal_bergabung',
-      header: 'Bergabung',
-      cell: ({ getValue }) => (
-        <span className="text-muted-foreground">{getValue<string>()}</span>
-      ),
-    },
-    {
-      accessorKey: 'is_aktif',
-      header: 'Status',
-      cell: ({ getValue }) => (
-        <span className={cn(
-          'text-xs font-medium px-2 py-0.5 rounded-full',
-          getValue<boolean>() ? 'bg-green-100 text-green-700' : 'bg-zinc-100 text-zinc-500'
-        )}>
-          {getValue<boolean>() ? 'Aktif' : 'Nonaktif'}
-        </span>
-      ),
-    },
-  ]
+  const handleToggle = () => {
+    if (!selected) return
+    toggleAktif(selected.id, {
+      onSuccess: (res) => {
+        const updated = res.data.pengajar
+        setSelected(updated)
+        toast.success(updated.is_aktif ? 'Pengajar diaktifkan' : 'Pengajar dinonaktifkan')
+      },
+      onError: () => toast.error('Gagal mengubah status pengajar'),
+    })
+  }
+
+  const columns = getPengajarColumns({
+    onDetail: openDetail,
+    onEdit: openEdit,
+    onDelete: handleDelete,
+  })
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div>
         <h1 className="text-xl font-semibold">Pengajar</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
@@ -86,25 +98,31 @@ export default function PengajarPage() {
         </p>
       </div>
 
-      {/* Tabs */}
       <div className="flex border-b border-border">
-        {(['daftar', 'tambah'] as Tab[]).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={cn(
-              'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors capitalize',
-              tab === t
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            )}
-          >
-            {t === 'daftar' ? 'Daftar Pengajar' : 'Tambah Pengajar'}
-          </button>
-        ))}
+        <button
+          onClick={goBack}
+          className={cn(
+            'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors',
+            tab === 'daftar'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          )}
+        >
+          Daftar Pengajar
+        </button>
+        <button
+          onClick={openCreate}
+          className={cn(
+            'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors',
+            tab === 'form'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          )}
+        >
+          {tabLabel ?? 'Tambah Pengajar'}
+        </button>
       </div>
 
-      {/* Daftar Tab */}
       {tab === 'daftar' && (
         <div className="space-y-4">
           <div className="flex gap-3">
@@ -120,12 +138,7 @@ export default function PengajarPage() {
             </span>
           </div>
 
-          <DataTable
-            columns={columns}
-            data={data?.data ?? []}
-            isLoading={isLoading}
-            onRowClick={(row) => router.push(`/pengajar/${row.id}`)}
-          />
+          <DataTable columns={columns} data={data?.data ?? []} isLoading={isLoading} />
 
           {data && data.last_page > 1 && (
             <div className="flex items-center gap-2 justify-end">
@@ -136,9 +149,7 @@ export default function PengajarPage() {
               >
                 Sebelumnya
               </button>
-              <span className="text-sm text-muted-foreground">
-                {page} / {data.last_page}
-              </span>
+              <span className="text-sm text-muted-foreground">{page} / {data.last_page}</span>
               <button
                 onClick={() => setPage((p) => Math.min(data.last_page, p + 1))}
                 disabled={page === data.last_page}
@@ -151,14 +162,45 @@ export default function PengajarPage() {
         </div>
       )}
 
-      {/* Tambah Tab */}
-      {tab === 'tambah' && (
+      {tab === 'form' && mode === 'tambah' && (
+        <PengajarForm onSubmit={handleCreate} isLoading={isCreating} onCancel={goBack} />
+      )}
+
+      {tab === 'form' && mode === 'edit' && selected && (
         <PengajarForm
-          onSubmit={handleCreate}
-          isLoading={isPending}
-          onCancel={() => setTab('daftar')}
+          defaultValues={{
+            user_id: selected.user_id,
+            jenis_kelamin: selected.jenis_kelamin,
+            tanggal_lahir: selected.tanggal_lahir?.split('T')[0] ?? '',
+            alamat: selected.alamat ?? '',
+            pendidikan_terakhir: selected.pendidikan_terakhir ?? '',
+            tanggal_bergabung: selected.tanggal_bergabung.split('T')[0],
+            is_aktif: selected.is_aktif,
+          }}
+          onSubmit={handleUpdate}
+          isLoading={isUpdating}
+          onCancel={goBack}
         />
       )}
+
+      {tab === 'form' && mode === 'detail' && selected && (
+        <PengajarDetail
+          selected={selected}
+          isToggling={isToggling}
+          onToggle={handleToggle}
+          onEdit={openEdit}
+          onDelete={handleDelete}
+        />
+      )}
+
+      <DeleteDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}
+        title={`Hapus pengajar "${deleteTarget?.user?.name}"?`}
+        description="Data pengajar tidak dapat dikembalikan setelah dihapus."
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+      />
     </div>
   )
 }
