@@ -27,7 +27,7 @@ export function getPengajarColumns({ onDetail, onEdit, onDelete }: PengajarColum
     },
     {
       accessorKey: 'jenis_kelamin',
-      header: 'JK',
+      header: 'Jenis Kelamin',
       cell: ({ getValue }) => getValue<string>() === 'L' ? 'Laki-laki' : 'Perempuan',
     },
     {

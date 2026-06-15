@@ -61,7 +61,7 @@ export function getMuridColumns({ onDetail, onEdit, onDelete }: MuridColumnsOpts
     },
     {
       accessorKey: 'jenis_kelamin',
-      header: 'JK',
+      header: 'Jenis Kelamin',
       cell: ({ getValue }) => getValue<string>() === 'L' ? 'Laki-laki' : 'Perempuan',
     },
     {
