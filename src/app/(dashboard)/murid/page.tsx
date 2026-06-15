@@ -4,42 +4,15 @@ import { useState } from 'react'
 import { DataTable } from '@/components/ui/data-table'
 import { useMuridList, useCreateMurid, useUpdateMurid, useDeleteMurid, useMuridDetail } from '@/hooks/useMurid'
 import { Murid, MuridStatus } from '@/types/murid'
-import { MuridFormData } from '@/lib/schemas/murid'
 import MuridForm from '@/components/murid/MuridForm'
 import { MuridDetail } from '@/components/murid/MuridDetail'
 import { getMuridColumns, STATUS_LABEL } from '@/components/murid/muridColumns'
 import { DeleteDialog } from '@/components/ui/delete-dialog'
+import { Tab, Mode } from '@/types/common'
+import { getMuridFotoUrl, toFormData } from '@/lib/murid-utils'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-
-type Tab = 'daftar' | 'form'
-type Mode = 'tambah' | 'edit' | 'detail'
-
-function getMuridFotoUrl(murid: Murid | undefined | null): string | null {
-  if (!murid) return null
-  const raw = murid.foto_url ?? (murid.foto ? `${process.env.NEXT_PUBLIC_API_URL}/storage/${murid.foto}` : null)
-  if (!raw) return null
-  try { return new URL(raw).pathname } catch { return raw }
-}
-
-function toFormData(formData: MuridFormData, method?: string): FormData {
-  const fd = new FormData()
-  if (method) fd.append('_method', method)
-  Object.entries(formData).forEach(([key, value]) => {
-    if (key === 'foto' && value instanceof File) {
-      fd.append('foto', value)
-    } else if (key === 'wali' && Array.isArray(value)) {
-      value.forEach((wali, i) => {
-        Object.entries(wali).forEach(([wKey, wVal]) => {
-          fd.append(`wali[${i}][${wKey}]`, typeof wVal === 'boolean' ? (wVal ? '1' : '0') : String(wVal ?? ''))
-        })
-      })
-    } else if (value !== undefined && value !== null) {
-      fd.append(key, String(value))
-    }
-  })
-  return fd
-}
+import { MuridFormData } from '@/lib/schemas/murid'
 
 export default function MuridPage() {
   const [tab, setTab] = useState<Tab>('daftar')

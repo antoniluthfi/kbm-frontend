@@ -9,11 +9,9 @@ import PengajarForm from '@/components/pengajar/PengajarForm'
 import { PengajarDetail } from '@/components/pengajar/PengajarDetail'
 import { getPengajarColumns } from '@/components/pengajar/pengajarColumns'
 import { DeleteDialog } from '@/components/ui/delete-dialog'
+import { Tab, Mode } from '@/types/common'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-
-type Tab = 'daftar' | 'form'
-type Mode = 'tambah' | 'edit' | 'detail'
 
 export default function PengajarPage() {
   const [tab, setTab] = useState<Tab>('daftar')

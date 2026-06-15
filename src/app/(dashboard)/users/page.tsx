@@ -10,11 +10,9 @@ import UserForm from '@/components/users/UserForm'
 import { UserDetail } from '@/components/users/UserDetail'
 import { getUserColumns, ROLE_LABELS } from '@/components/users/userColumns'
 import { DeleteDialog } from '@/components/ui/delete-dialog'
+import { Tab, Mode } from '@/types/common'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-
-type Tab = 'daftar' | 'form'
-type Mode = 'tambah' | 'edit' | 'detail'
 
 export default function UsersPage() {
   const currentUser = useAuthStore((s) => s.user)

@@ -3,10 +3,6 @@ import { Murid, MuridStatus, HubunganWali } from '@/types/murid'
 import { cn, formatDate } from '@/lib/utils'
 import { Eye, Pencil, Trash2 } from 'lucide-react'
 
-function getMuridFotoUrl(murid: Murid): string | null {
-  return murid.foto_url ?? null
-}
-
 export const STATUS_LABEL: Record<MuridStatus, string> = {
   aktif: 'Aktif',
   nonaktif: 'Nonaktif',
@@ -40,7 +36,7 @@ export function getMuridColumns({ onDetail, onEdit, onDelete }: MuridColumnsOpts
       accessorKey: 'nama',
       header: 'Nama',
       cell: ({ row }) => {
-        const fotoUrl = getMuridFotoUrl(row.original)
+        const fotoUrl = row.original.foto_url ?? null
         return (
           <div className="flex items-center gap-3">
             {fotoUrl ? (

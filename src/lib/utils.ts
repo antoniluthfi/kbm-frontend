@@ -21,3 +21,5 @@ export const labelClass = "font-sans block text-sm font-medium text-foreground m
 export const cardClass = "bg-card border border-border rounded-xl"
 
 export const errorClass = "mt-1 text-xs text-destructive"
+
+export const TODAY = new Date().toISOString().split('T')[0]

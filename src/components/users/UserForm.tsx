@@ -6,38 +6,11 @@ import { useEffect } from 'react'
 import { createUserSchema, editUserSchema, CreateUserData, EditUserData } from '@/lib/schemas/user'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { Field, formSelectClass } from '@/components/ui/field'
+import { ROLE_LABELS } from '@/components/users/userColumns'
 import { UserRole } from '@/types/user'
-
-const ROLE_LABELS: Record<UserRole, string> = {
-  super_admin: 'Super Admin',
-  pengajar: 'Pengajar',
-  murid: 'Murid',
-  wali_murid: 'Wali Murid',
-}
-
-const selectClass =
-  'w-full h-8 border border-input rounded-lg px-2.5 text-sm bg-background outline-none focus:border-ring focus:ring-3 focus:ring-ring/50 transition-colors disabled:opacity-50'
-
-function Field({
-  label,
-  error,
-  children,
-}: {
-  label: string
-  error?: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="space-y-1.5">
-      <Label>{label}</Label>
-      {children}
-      {error && <p className="text-destructive text-xs">{error}</p>}
-    </div>
-  )
-}
 
 interface UserFormProps {
   mode: 'create' | 'edit'
@@ -101,7 +74,7 @@ export default function UserForm({
 
             <div className="col-span-2">
               <Field label="Role" error={errors.role?.message}>
-                <select {...register('role')} className={selectClass}>
+                <select {...register('role')} className={formSelectClass}>
                   {(Object.entries(ROLE_LABELS) as [UserRole, string][]).map(([value, label]) => (
                     <option key={value} value={value}>{label}</option>
                   ))}

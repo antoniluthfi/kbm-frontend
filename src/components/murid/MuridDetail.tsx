@@ -9,11 +9,6 @@ import { Button } from '@/components/ui/button'
 import { cn, formatDate } from '@/lib/utils'
 import { Pencil, Trash2, Star } from 'lucide-react'
 
-function getMuridFotoUrl(murid: Murid | undefined | null): string | null {
-  if (!murid) return null
-  return murid.foto_url ?? null
-}
-
 interface MuridDetailProps {
   selected: Murid
   muridDetail: Murid | undefined
@@ -23,6 +18,8 @@ interface MuridDetailProps {
 }
 
 export function MuridDetail({ selected, muridDetail, isLoadingDetail, onEdit, onDelete }: MuridDetailProps) {
+  const fotoUrl = muridDetail?.foto_url ?? selected.foto_url
+
   return (
     <div className="space-y-4">
       <div className="flex justify-end gap-2">
@@ -40,9 +37,9 @@ export function MuridDetail({ selected, muridDetail, isLoadingDetail, onEdit, on
       <Card>
         <CardHeader>
           <div className="flex items-center gap-4">
-            {(getMuridFotoUrl(muridDetail) ?? getMuridFotoUrl(selected)) ? (
+            {fotoUrl ? (
               <img
-                src={(getMuridFotoUrl(muridDetail) ?? getMuridFotoUrl(selected))!}
+                src={fotoUrl}
                 alt={selected.nama}
                 className="size-14 rounded-full object-cover ring-2 ring-border"
               />

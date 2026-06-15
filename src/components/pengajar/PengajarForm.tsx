@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { Field, formSelectClass } from '@/components/ui/field'
+import { TODAY } from '@/lib/utils'
 
 interface PengajarFormProps {
   defaultValues?: Partial<PengajarFormData>
@@ -17,21 +19,6 @@ interface PengajarFormProps {
   onCancel?: () => void
   isLoading?: boolean
 }
-
-function Field({ label, error, children, hint }: { label: string; error?: string; hint?: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1.5">
-      <Label>{label}</Label>
-      {children}
-      {hint && !error && <p className="text-muted-foreground text-xs">{hint}</p>}
-      {error && <p className="text-destructive text-xs">{error}</p>}
-    </div>
-  )
-}
-
-const selectClass = "w-full h-8 border border-input rounded-lg px-2.5 text-sm bg-background outline-none focus:border-ring focus:ring-3 focus:ring-ring/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-
-const TODAY = new Date().toISOString().split('T')[0]
 
 export default function PengajarForm({ defaultValues, onSubmit, onCancel, isLoading }: PengajarFormProps) {
   const { data: usersData, isLoading: isLoadingUsers } = useUsers({ role: 'pengajar' })
@@ -64,7 +51,7 @@ export default function PengajarForm({ defaultValues, onSubmit, onCancel, isLoad
               >
                 <select
                   {...register('user_id', { valueAsNumber: true })}
-                  className={selectClass}
+                  className={formSelectClass}
                   disabled={isLoadingUsers}
                 >
                   <option value="">
@@ -80,7 +67,7 @@ export default function PengajarForm({ defaultValues, onSubmit, onCancel, isLoad
             </div>
 
             <Field label="Jenis Kelamin" error={errors.jenis_kelamin?.message}>
-              <select {...register('jenis_kelamin')} className={selectClass}>
+              <select {...register('jenis_kelamin')} className={formSelectClass}>
                 <option value="L">Laki-laki</option>
                 <option value="P">Perempuan</option>
               </select>

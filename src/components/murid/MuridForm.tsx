@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { Field, formSelectClass } from '@/components/ui/field'
+import { TODAY } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { Plus, Trash2, ImageIcon } from 'lucide-react'
 
@@ -21,20 +23,6 @@ interface MuridFormProps {
   onCancel?: () => void
   isLoading?: boolean
 }
-
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1.5">
-      <Label>{label}</Label>
-      {children}
-      {error && <p className="text-destructive text-xs">{error}</p>}
-    </div>
-  )
-}
-
-const selectClass = "w-full h-8 border border-input rounded-lg px-2.5 text-sm bg-background outline-none focus:border-ring focus:ring-3 focus:ring-ring/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-
-const TODAY = new Date().toISOString().split('T')[0]
 
 const STEPS = ['Data Murid', 'Wali Murid']
 
@@ -110,14 +98,14 @@ export default function MuridForm({ defaultValues, fotoUrl, onSubmit, onCancel, 
               </div>
 
               <Field label="Jenis Kelamin" error={errors.jenis_kelamin?.message}>
-                <select {...register('jenis_kelamin')} className={selectClass}>
+                <select {...register('jenis_kelamin')} className={formSelectClass}>
                   <option value="L">Laki-laki</option>
                   <option value="P">Perempuan</option>
                 </select>
               </Field>
 
               <Field label="Status" error={errors.status?.message}>
-                <select {...register('status')} className={selectClass}>
+                <select {...register('status')} className={formSelectClass}>
                   <option value="aktif">Aktif</option>
                   <option value="nonaktif">Nonaktif</option>
                   <option value="alumni">Alumni</option>
@@ -206,7 +194,7 @@ export default function MuridForm({ defaultValues, fotoUrl, onSubmit, onCancel, 
                   </div>
 
                   <Field label="Hubungan">
-                    <select {...register(`wali.${index}.hubungan`)} className={selectClass}>
+                    <select {...register(`wali.${index}.hubungan`)} className={formSelectClass}>
                       <option value="ayah">Ayah</option>
                       <option value="ibu">Ibu</option>
                       <option value="kakak">Kakak</option>
