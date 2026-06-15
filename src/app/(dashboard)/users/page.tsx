@@ -38,7 +38,7 @@ export default function UsersPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Pengguna</h1>
+        <h1 className="font-heading text-2xl font-bold text-foreground">Pengguna</h1>
         <Button onClick={openCreate} size="sm">
           <Plus className="size-3.5" /> Tambah
         </Button>
@@ -61,13 +61,13 @@ export default function UsersPage() {
       {/* Form panel */}
       {showForm && (
         <div className={`${cardClass} p-6`}>
-          <h2 className="text-sm font-semibold text-foreground mb-4">
+          <h2 className="font-heading text-sm font-semibold text-foreground mb-4">
             {selectedUser ? 'Edit Pengguna' : 'Tambah Pengguna'}
           </h2>
           <UserForm user={selectedUser ?? undefined} onSuccess={closeForm} />
           <button
             onClick={closeForm}
-            className="mt-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="font-sans mt-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             Batal
           </button>

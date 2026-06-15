@@ -39,7 +39,7 @@ export default function AvatarUpload({ user }: { user: User }) {
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={isPending}
-          className="text-sm font-medium text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
+          className="font-sans text-sm font-medium text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
         >
           {isPending ? 'Mengunggah...' : 'Ganti foto'}
         </button>

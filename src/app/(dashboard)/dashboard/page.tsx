@@ -7,10 +7,10 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+      <h1 className="font-heading text-2xl font-bold text-foreground">Dashboard</h1>
       {user && (
-        <p className="mt-2 text-gray-600">
-          Selamat datang, <span className="font-medium">{user.name}</span>
+        <p className="mt-2 text-muted-foreground">
+          Selamat datang, <span className="font-medium text-foreground">{user.name}</span>
         </p>
       )}
     </div>

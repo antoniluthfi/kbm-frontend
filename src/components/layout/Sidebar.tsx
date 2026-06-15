@@ -67,7 +67,7 @@ export default function Sidebar() {
         <button
           onClick={() => logout()}
           disabled={isPending}
-          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors disabled:opacity-50"
+          className="font-sans flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors disabled:opacity-50"
         >
           <LogOut className="size-4 shrink-0" />
           Keluar
