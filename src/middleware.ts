@@ -5,15 +5,16 @@ const PUBLIC_ROUTES = ['/login']
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const isPublic = PUBLIC_ROUTES.includes(pathname)
-  const hasSession = request.cookies.has('laravel_session')
 
-  if (!hasSession && !isPublic) {
+  if (pathname === '/') {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  if (hasSession && pathname === '/login') {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+  const isPublic = PUBLIC_ROUTES.includes(pathname)
+  const hasSession = request.cookies.has('laravel-session')
+
+  if (!hasSession && !isPublic) {
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
   return NextResponse.next()

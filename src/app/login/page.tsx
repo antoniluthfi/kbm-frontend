@@ -1,6 +1,18 @@
+'use client'
+
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import LoginForm from '@/components/auth/LoginForm'
+import { useMe } from '@/hooks/useAuth'
 
 export default function LoginPage() {
+  const router = useRouter()
+  const { data: user } = useMe()
+
+  useEffect(() => {
+    if (user) router.replace('/dashboard')
+  }, [user, router])
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm bg-card border border-border rounded-xl shadow-sm p-8">
