@@ -158,6 +158,7 @@ export default function PengajarPage() {
             tanggal_bergabung: selected.tanggal_bergabung.split('T')[0],
             is_aktif: selected.is_aktif,
           }}
+          defaultUser={selected.user}
           onSubmit={handleUpdate}
           isLoading={isUpdating}
           onCancel={goBack}

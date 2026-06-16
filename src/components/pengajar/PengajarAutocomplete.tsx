@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { usePengajarList } from '@/hooks/usePengajar'
+import { useDebounce } from '@/hooks/useDebounce'
 import { Pengajar } from '@/types/pengajar'
 import { AvatarInitial } from '@/components/ui/avatar-initial'
 import { cn } from '@/lib/utils'
@@ -26,8 +27,9 @@ export function PengajarAutocomplete({
   const [inputValue, setInputValue] = useState('')
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const debouncedSearch = useDebounce(inputValue)
 
-  const { data: pengajarData } = usePengajarList({ search: inputValue, is_aktif: true })
+  const { data: pengajarData } = usePengajarList({ search: debouncedSearch, is_aktif: true })
   const pengajarList = pengajarData?.data ?? []
 
   useEffect(() => {

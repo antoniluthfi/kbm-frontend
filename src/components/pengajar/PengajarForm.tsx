@@ -3,7 +3,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { pengajarSchema, PengajarFormData } from '@/lib/schemas/pengajar'
-import { useUsers } from '@/hooks/useUsers'
+import { User } from '@/types/user'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,24 +11,24 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Field, formSelectClass } from '@/components/ui/field'
+import { UserAutocomplete } from '@/components/users/UserAutocomplete'
 import { TODAY } from '@/lib/utils'
 
 interface PengajarFormProps {
   defaultValues?: Partial<PengajarFormData>
+  defaultUser?: User
   onSubmit: (data: PengajarFormData) => void
   onCancel?: () => void
   isLoading?: boolean
 }
 
-export default function PengajarForm({ defaultValues, onSubmit, onCancel, isLoading }: PengajarFormProps) {
-  const { data: usersData, isLoading: isLoadingUsers } = useUsers({ role: 'pengajar' })
-
-  const { register, handleSubmit, formState: { errors } } = useForm<PengajarFormData>({
+export default function PengajarForm({ defaultValues, defaultUser, onSubmit, onCancel, isLoading }: PengajarFormProps) {
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<PengajarFormData>({
     resolver: zodResolver(pengajarSchema),
     defaultValues: { is_aktif: true, jenis_kelamin: 'L' as const, ...defaultValues },
   })
 
-  const pengajarUsers = usersData?.data ?? []
+  const selectedUserId = watch('user_id')
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
@@ -43,26 +43,17 @@ export default function PengajarForm({ defaultValues, onSubmit, onCancel, isLoad
               <Field
                 label="Akun User"
                 error={errors.user_id?.message}
-                hint={
-                  !isLoadingUsers && pengajarUsers.length === 0
-                    ? 'Belum ada user dengan role pengajar. Buat user terlebih dahulu di menu Users.'
-                    : undefined
-                }
+                hint="Hanya menampilkan user dengan role 'Pengajar'"
               >
-                <select
-                  {...register('user_id', { valueAsNumber: true })}
-                  className={formSelectClass}
-                  disabled={isLoadingUsers}
-                >
-                  <option value="">
-                    {isLoadingUsers ? 'Memuat daftar user...' : 'Pilih user yang akan ditautkan'}
-                  </option>
-                  {pengajarUsers.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.name} — {user.email}
-                    </option>
-                  ))}
-                </select>
+                <input type="hidden" {...register('user_id', { valueAsNumber: true })} />
+                <UserAutocomplete
+                  role="pengajar"
+                  onSelect={(user) => setValue('user_id', user.id, { shouldValidate: true })}
+                  selectedId={selectedUserId}
+                  defaultUser={defaultUser}
+                  error={errors.user_id?.message}
+                  placeholder="Ketik nama user untuk mencari..."
+                />
               </Field>
             </div>
 
