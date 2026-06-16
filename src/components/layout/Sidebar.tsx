@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useLogout } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, Users, GraduationCap, BookUser, LogOut, UserCircle, School, Layers, CalendarDays } from 'lucide-react'
+import { LayoutDashboard, Users, GraduationCap, BookUser, LogOut, UserCircle, School, Layers, CalendarDays, ClipboardList } from 'lucide-react'
 
 const navItems = [
   {
@@ -48,6 +48,12 @@ const navItems = [
     href: '/jadwal',
     label: 'Jadwal',
     icon: CalendarDays,
+    roles: ['super_admin', 'pengajar'],
+  },
+  {
+    href: '/absensi',
+    label: 'Absensi',
+    icon: ClipboardList,
     roles: ['super_admin', 'pengajar'],
   },
 ]
