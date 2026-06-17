@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useLogout } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, Users, GraduationCap, BookUser, LogOut, UserCircle, School, Layers, CalendarDays, ClipboardList } from 'lucide-react'
+import { LayoutDashboard, Users, GraduationCap, BookUser, LogOut, UserCircle, School, Layers, CalendarDays, ClipboardList, BookOpen } from 'lucide-react'
 
 const navItems = [
   {
@@ -54,6 +54,12 @@ const navItems = [
     href: '/absensi',
     label: 'Absensi',
     icon: ClipboardList,
+    roles: ['super_admin', 'pengajar'],
+  },
+  {
+    href: '/kurikulum',
+    label: 'Kurikulum',
+    icon: BookOpen,
     roles: ['super_admin', 'pengajar'],
   },
 ]

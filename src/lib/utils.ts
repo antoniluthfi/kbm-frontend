@@ -37,3 +37,17 @@ export function getCurrentTahunAjaran(): string {
   const tahun = now.getFullYear()
   return now.getMonth() >= 6 ? `${tahun}/${tahun + 1}` : `${tahun - 1}/${tahun}`
 }
+
+export function swapUrutan<T extends { id: number; urutan: number }>(
+  items: T[], itemId: number, dir: 'up' | 'down'
+): { id: number; urutan: number }[] | null {
+  const sorted = [...items].sort((a, b) => a.urutan - b.urutan)
+  const idx = sorted.findIndex((i) => i.id === itemId)
+  const swapIdx = dir === 'up' ? idx - 1 : idx + 1
+  if (swapIdx < 0 || swapIdx >= sorted.length) return null
+  return sorted.map((item, n) => {
+    if (n === idx) return { id: item.id, urutan: sorted[swapIdx].urutan }
+    if (n === swapIdx) return { id: item.id, urutan: sorted[idx].urutan }
+    return { id: item.id, urutan: item.urutan }
+  })
+}
