@@ -1,6 +1,6 @@
 'use client'
 
-import { Jadwal, JadwalMingguIni, HARI_LABEL, HARI_ORDER } from '@/types/jadwal'
+import { Jadwal, JadwalMingguIni, HARI_LABEL, HARI_ORDER, MINGGU_KE_LABEL } from '@/types/jadwal'
 import { JENIS_COLOR } from '@/types/program'
 import { cn } from '@/lib/utils'
 import { Pencil, Trash2 } from 'lucide-react'
@@ -42,6 +42,11 @@ export function JadwalKalenderMinggu({ data, onDelete, onEdit, isSuperAdmin }: J
                     {j.kelas && (
                       <span className="inline-block bg-muted text-muted-foreground px-1.5 py-0.5 rounded text-[10px] truncate max-w-full">
                         {j.kelas.nama}
+                      </span>
+                    )}
+                    {j.frekuensi === 'bulanan' && j.minggu_ke && (
+                      <span className="inline-block bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0.5 rounded text-[10px]">
+                        {MINGGU_KE_LABEL[j.minggu_ke]}
                       </span>
                     )}
                     {j.program && (

@@ -3,7 +3,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { jadwalSchema, JadwalFormData } from '@/lib/schemas/jadwal'
-import { HARI_LABEL, HARI_ORDER } from '@/types/jadwal'
+import { HARI_LABEL, HARI_ORDER, MINGGU_KE_LABEL } from '@/types/jadwal'
 import { useProgramList } from '@/hooks/useProgram'
 import { useKelasList } from '@/hooks/useKelas'
 import { usePengajarList } from '@/hooks/usePengajar'
@@ -38,11 +38,13 @@ export default function JadwalForm({
   } = useForm<JadwalFormData>({
     resolver: zodResolver(jadwalSchema),
     defaultValues: {
+      frekuensi: 'mingguan',
       mulai_berlaku: new Date().toISOString().slice(0, 10),
       ...defaultValues,
     },
   })
 
+  const frekuensi = watch('frekuensi')
   const mulaiValue = watch('mulai_berlaku')
 
   const { data: programData } = useProgramList({ is_aktif: true })
@@ -96,6 +98,13 @@ export default function JadwalForm({
               </select>
             </Field>
 
+            <Field label="Frekuensi" error={errors.frekuensi?.message}>
+              <select className={formSelectClass} {...register('frekuensi')}>
+                <option value="mingguan">Mingguan (setiap pekan)</option>
+                <option value="bulanan">Bulanan (1x sebulan)</option>
+              </select>
+            </Field>
+
             <Field label="Hari" error={errors.hari?.message}>
               <select className={formSelectClass} {...register('hari')}>
                 <option value="">-- Pilih hari --</option>
@@ -105,7 +114,21 @@ export default function JadwalForm({
               </select>
             </Field>
 
-            <div />
+            {frekuensi === 'bulanan' && (
+              <div className="col-span-2">
+                <Field label="Minggu Ke-" error={errors.minggu_ke?.message} hint="Pekan ke berapa dalam bulan tersebut">
+                  <select
+                    className={formSelectClass}
+                    {...register('minggu_ke', { setValueAs: (v) => v === '' ? null : Number(v) })}
+                  >
+                    <option value="">-- Pilih minggu --</option>
+                    {Object.entries(MINGGU_KE_LABEL).map(([value, label]) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
+            )}
 
             <Field label="Jam Mulai" error={errors.jam_mulai?.message}>
               <Input type="time" {...register('jam_mulai')} />

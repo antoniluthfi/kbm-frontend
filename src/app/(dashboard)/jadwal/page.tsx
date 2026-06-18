@@ -105,7 +105,7 @@ function JadwalPageContent() {
       <div>
         <h1 className="text-xl font-semibold">Jadwal</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Jadwal kegiatan mingguan — template rencana berulang
+          Template jadwal rutin — mingguan maupun bulanan. Kalender hanya menampilkan jadwal yang aktif pekan ini.
         </p>
       </div>
 
@@ -371,6 +371,8 @@ function JadwalPageContent() {
               program_id: selected.program_id,
               kelas_id: selected.kelas_id,
               pengajar_id: selected.pengajar_id,
+              frekuensi: selected.frekuensi,
+              minggu_ke: selected.minggu_ke,
               hari: selected.hari,
               jam_mulai: selected.jam_mulai.slice(0, 5),
               jam_selesai: selected.jam_selesai.slice(0, 5),

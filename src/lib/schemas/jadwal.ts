@@ -5,6 +5,8 @@ export const jadwalSchema = z
     program_id: z.number({ error: 'Program wajib dipilih' }).int().min(1, 'Program wajib dipilih'),
     kelas_id: z.number().int().positive().optional().nullable(),
     pengajar_id: z.number().int().positive().optional().nullable(),
+    frekuensi: z.enum(['mingguan', 'bulanan'], { error: 'Frekuensi wajib dipilih' }),
+    minggu_ke: z.number().int().min(1).max(4).optional().nullable(),
     hari: z.enum(
       ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'],
       { error: 'Hari wajib dipilih' },
@@ -21,6 +23,10 @@ export const jadwalSchema = z
   .refine(
     (d) => !d.jam_mulai || !d.jam_selesai || d.jam_selesai > d.jam_mulai,
     { message: 'Jam selesai harus setelah jam mulai', path: ['jam_selesai'] },
+  )
+  .refine(
+    (d) => d.frekuensi !== 'bulanan' || (d.minggu_ke !== null && d.minggu_ke !== undefined),
+    { message: 'Minggu ke wajib diisi untuk jadwal bulanan', path: ['minggu_ke'] },
   )
   .refine(
     (d) => {

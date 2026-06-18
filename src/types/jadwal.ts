@@ -11,6 +11,8 @@ export type HariEnum =
   | 'sabtu'
   | 'minggu'
 
+export type FrekuensiEnum = 'mingguan' | 'bulanan'
+
 export const HARI_LABEL: Record<HariEnum, string> = {
   senin: 'Senin',
   selasa: 'Selasa',
@@ -31,11 +33,20 @@ export const HARI_ORDER: HariEnum[] = [
   'minggu',
 ]
 
+export const MINGGU_KE_LABEL: Record<number, string> = {
+  1: 'Minggu ke-1',
+  2: 'Minggu ke-2',
+  3: 'Minggu ke-3',
+  4: 'Minggu ke-4',
+}
+
 export interface Jadwal {
   id: number
   program_id: number
   kelas_id: number | null
   pengajar_id: number | null
+  frekuensi: FrekuensiEnum
+  minggu_ke: number | null
   hari: HariEnum
   jam_mulai: string
   jam_selesai: string
