@@ -93,7 +93,7 @@ export const useRetryWa = () => {
 
 export const usePengumumanList = (page = 1) =>
   useQuery({
-    queryKey: ['pengumuman', page],
+    queryKey: ['pengumuman', 'list', page],
     queryFn: async () => {
       const { data } = await api.get<{ data: Pengumuman[]; current_page: number; last_page: number }>('/api/pengumuman', { params: { page } })
       return data
@@ -102,7 +102,7 @@ export const usePengumumanList = (page = 1) =>
 
 export const usePengumumanDetail = (id: number) =>
   useQuery({
-    queryKey: ['pengumuman', id],
+    queryKey: ['pengumuman', 'detail', id],
     queryFn: async () => {
       const { data } = await api.get<{ pengumuman: Pengumuman; stats: { terkirim: number; gagal: number } }>(`/api/pengumuman/${id}`)
       return data

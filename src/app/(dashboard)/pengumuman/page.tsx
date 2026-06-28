@@ -8,11 +8,16 @@ import { useKelasList } from '@/hooks/useKelas'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Field, formSelectClass } from '@/components/ui/field'
+import { Pagination } from '@/components/ui/pagination'
+import { PageLoading } from '@/components/ui/page-loading'
 import { cn } from '@/lib/utils'
 import type { Pengumuman, PengumumanFormData } from '@/types/wa'
 import { formatDistanceToNow } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
+
+type Tab = 'kirim' | 'riwayat' | 'detail'
 
 const targetLabel: Record<PengumumanFormData['target'], string> = {
   semua:           'Semua',
@@ -30,17 +35,20 @@ const emptyForm = (): PengumumanFormData => ({
 })
 
 export default function PengumumanPage() {
-  const [form, setForm]           = useState<PengumumanFormData>(emptyForm)
-  const [detailId, setDetailId]   = useState<number | null>(null)
-  const [page, setPage]           = useState(1)
+  const [tab, setTab]           = useState<Tab>('kirim')
+  const [form, setForm]         = useState<PengumumanFormData>(emptyForm)
+  const [selected, setSelected] = useState<Pengumuman | null>(null)
+  const [page, setPage]         = useState(1)
 
-  const { data: listData, isLoading }           = usePengumumanList(page)
-  const { data: detailData, isLoading: detailLoading } = usePengumumanDetail(detailId ?? 0)
-  const { data: kelasData }                     = useKelasList()
-  const { mutate: kirim, isPending: isKirim }   = useKirimPengumuman()
+  const { data: listData, isLoading }                  = usePengumumanList(page)
+  const { data: detailData, isLoading: detailLoading } = usePengumumanDetail(selected?.id ?? 0)
+  const { data: kelasData }                            = useKelasList()
+  const { mutate: kirim, isPending: isKirim }          = useKirimPengumuman()
 
   const list  = listData?.data ?? []
   const kelas = kelasData?.data ?? []
+
+  const openDetail = (p: Pengumuman) => { setSelected(p); setTab('detail') }
 
   const handleKirim = () => {
     if (!form.judul.trim() || !form.konten.trim()) {
@@ -61,80 +69,9 @@ export default function PengumumanPage() {
     })
   }
 
-  // ─── Detail view ─────────────────────────────────────────────────────────────
-  if (detailId !== null) {
-    const pengumuman = detailData?.pengumuman
-    const stats      = detailData?.stats
+  const pengumuman = detailData?.pengumuman
+  const stats      = detailData?.stats
 
-    return (
-      <div className="space-y-5">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setDetailId(null)}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            ← Kembali
-          </button>
-          <span className="text-muted-foreground">/</span>
-          <span className="text-sm font-medium truncate">{pengumuman?.judul ?? '...'}</span>
-        </div>
-
-        {detailLoading ? (
-          <p className="text-sm text-muted-foreground">Memuat...</p>
-        ) : pengumuman ? (
-          <div className="space-y-4">
-            <Card>
-              <CardContent className="pt-5 space-y-3">
-                <div>
-                  <p className="text-xs text-muted-foreground">Judul</p>
-                  <p className="font-medium">{pengumuman.judul}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Pesan</p>
-                  <p className="text-sm whitespace-pre-wrap">{pengumuman.konten}</p>
-                </div>
-                <div className="flex flex-wrap gap-4 pt-1 text-sm">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Target</p>
-                    <p>{targetLabel[pengumuman.target]}</p>
-                  </div>
-                  {pengumuman.kelas && (
-                    <div>
-                      <p className="text-xs text-muted-foreground">Kelas</p>
-                      <p>{pengumuman.kelas.nama}</p>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-xs text-muted-foreground">Dibuat oleh</p>
-                    <p>{pengumuman.pembuat?.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Dikirim</p>
-                    <p>{pengumuman.terkirim_at ? formatDistanceToNow(new Date(pengumuman.terkirim_at), { addSuffix: true, locale: localeId }) : '-'}</p>
-                  </div>
-                </div>
-
-                {stats && (
-                  <div className="flex gap-4 pt-2 border-t border-border">
-                    <div className="text-center">
-                      <p className="text-lg font-semibold text-green-600">{stats.terkirim}</p>
-                      <p className="text-xs text-muted-foreground">Terkirim</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-lg font-semibold text-red-600">{stats.gagal}</p>
-                      <p className="text-xs text-muted-foreground">Gagal</p>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        ) : null}
-      </div>
-    )
-  }
-
-  // ─── Main view ───────────────────────────────────────────────────────────────
   return (
     <div className="space-y-5">
       <div>
@@ -144,8 +81,47 @@ export default function PengumumanPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        {/* ── Form Kirim ── */}
+      {/* Tab bar */}
+      <div className="flex border-b border-border">
+        <button
+          onClick={() => setTab('kirim')}
+          className={cn(
+            'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors',
+            tab === 'kirim'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          )}
+        >
+          Kirim Pengumuman
+        </button>
+        <button
+          onClick={() => setTab('riwayat')}
+          className={cn(
+            'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors',
+            tab === 'riwayat'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          )}
+        >
+          Riwayat
+        </button>
+        {selected && (
+          <button
+            onClick={() => setTab('detail')}
+            className={cn(
+              'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors max-w-xs truncate',
+              tab === 'detail'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            )}
+          >
+            {selected.judul}
+          </button>
+        )}
+      </div>
+
+      {/* ── Tab: Kirim ── */}
+      {tab === 'kirim' && (
         <Card>
           <CardHeader>
             <CardTitle>Kirim Pengumuman</CardTitle>
@@ -160,8 +136,8 @@ export default function PengumumanPage() {
             </Field>
 
             <Field label="Pesan">
-              <textarea
-                className="w-full min-h-28 rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 resize-none"
+              <Textarea
+                className="min-h-28 resize-none"
                 value={form.konten}
                 onChange={(e) => setForm({ ...form, konten: e.target.value })}
                 placeholder="Isi pengumuman..."
@@ -197,7 +173,6 @@ export default function PengumumanPage() {
               </Field>
             )}
 
-            {/* Preview */}
             {(form.judul || form.konten) && (
               <div className="rounded-lg bg-muted/50 border border-border px-3 py-2.5 space-y-1">
                 <p className="text-xs font-medium text-muted-foreground">Preview pesan WA:</p>
@@ -213,15 +188,15 @@ export default function PengumumanPage() {
             </Button>
           </CardContent>
         </Card>
+      )}
 
-        {/* ── Riwayat ── */}
-        <div className="space-y-3">
-          <h2 className="text-sm font-medium">Riwayat Pengumuman</h2>
-
+      {/* ── Tab: Riwayat ── */}
+      {tab === 'riwayat' && (
+        <div className="space-y-4">
           {isLoading ? (
-            <p className="text-sm text-muted-foreground">Memuat...</p>
+            <PageLoading />
           ) : list.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-12 text-center">
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-16 text-center">
               <Users className="size-8 text-muted-foreground/40 mb-2" />
               <p className="text-sm text-muted-foreground">Belum ada pengumuman</p>
             </div>
@@ -230,7 +205,7 @@ export default function PengumumanPage() {
               {list.map((p: Pengumuman) => (
                 <button
                   key={p.id}
-                  onClick={() => setDetailId(p.id)}
+                  onClick={() => openDetail(p)}
                   className="w-full text-left rounded-xl border border-border bg-card px-4 py-3 hover:bg-muted/50 transition-colors flex items-center gap-3"
                 >
                   <div className="flex-1 min-w-0">
@@ -260,30 +235,68 @@ export default function PengumumanPage() {
             </div>
           )}
 
-          {/* Pagination */}
-          {listData && listData.last_page > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-2">
-              <Button
-                variant="outline" size="sm"
-                disabled={page === 1}
-                onClick={() => setPage(p => p - 1)}
-              >
-                Sebelumnya
-              </Button>
-              <span className="text-xs text-muted-foreground">
-                {listData.current_page} / {listData.last_page}
-              </span>
-              <Button
-                variant="outline" size="sm"
-                disabled={page === listData.last_page}
-                onClick={() => setPage(p => p + 1)}
-              >
-                Berikutnya
-              </Button>
-            </div>
-          )}
+          <Pagination page={page} lastPage={listData?.last_page ?? 1} onPageChange={setPage} />
         </div>
-      </div>
+      )}
+
+      {/* ── Tab: Detail ── */}
+      {tab === 'detail' && selected && (
+        <div className="space-y-4">
+          {detailLoading ? (
+            <PageLoading />
+          ) : pengumuman ? (
+            <Card>
+              <CardContent className="pt-5 space-y-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">Judul</p>
+                  <p className="font-medium">{pengumuman.judul}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Pesan</p>
+                  <p className="text-sm whitespace-pre-wrap">{pengumuman.konten}</p>
+                </div>
+                <div className="flex flex-wrap gap-4 pt-1 text-sm">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Target</p>
+                    <p>{targetLabel[pengumuman.target]}</p>
+                  </div>
+                  {pengumuman.kelas && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Kelas</p>
+                      <p>{pengumuman.kelas.nama}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-xs text-muted-foreground">Dibuat oleh</p>
+                    <p>{pengumuman.pembuat?.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Dikirim</p>
+                    <p>
+                      {pengumuman.terkirim_at
+                        ? formatDistanceToNow(new Date(pengumuman.terkirim_at), { addSuffix: true, locale: localeId })
+                        : '-'}
+                    </p>
+                  </div>
+                </div>
+
+                {stats && (
+                  <div className="flex gap-4 pt-2 border-t border-border">
+                    <div className="text-center">
+                      <p className="text-lg font-semibold text-green-600">{stats.terkirim}</p>
+                      <p className="text-xs text-muted-foreground">Terkirim</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-lg font-semibold text-red-600">{stats.gagal}</p>
+                      <p className="text-xs text-muted-foreground">Gagal</p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ) : null}
+        </div>
+      )}
     </div>
   )
 }

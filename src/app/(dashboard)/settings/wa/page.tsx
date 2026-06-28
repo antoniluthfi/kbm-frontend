@@ -9,7 +9,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Field, formSelectClass } from '@/components/ui/field'
 import { cn } from '@/lib/utils'
-import type { WaSessionStatus } from '@/types/wa'
+import type { WaSessionStatus, WaSettings } from '@/types/wa'
+
+type Tab = 'status' | 'konfigurasi'
 
 const statusLabel: Record<WaSessionStatus, string> = {
   connected:     'Terhubung',
@@ -30,6 +32,8 @@ const statusColor: Record<WaSessionStatus, string> = {
 }
 
 export default function WaSettingsPage() {
+  const [tab, setTab] = useState<Tab>('status')
+
   const { data: status, isLoading: statusLoading } = useWaStatus()
   const { data: qrData } = useWaQr(status?.status === 'qr_ready')
   const { data: settings } = useWaSettings()
@@ -37,7 +41,13 @@ export default function WaSettingsPage() {
   const { mutate: updateSettings, isPending: isSaving } = useUpdateWaSettings()
   const { mutate: testWa, isPending: isTesting } = useTestWa()
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    provider:   WaSettings['provider'] | ''
+    base_url:   string
+    api_key:    string
+    session_id: string
+    token:      string
+  }>({
     provider:   '',
     base_url:   '',
     api_key:    '',
@@ -46,7 +56,6 @@ export default function WaSettingsPage() {
   })
   const [formReady, setFormReady] = useState(false)
 
-  // Isi form ketika settings berhasil di-fetch
   if (settings && !formReady) {
     setForm({
       provider:   settings.provider,
@@ -63,10 +72,13 @@ export default function WaSettingsPage() {
   const isQrReady     = currentStatus === 'qr_ready'
 
   const handleSave = () => {
-    updateSettings(form, {
-      onSuccess: () => toast.success('Konfigurasi berhasil disimpan'),
-      onError:   () => toast.error('Gagal menyimpan konfigurasi'),
-    })
+    updateSettings(
+      { ...form, provider: form.provider as WaSettings['provider'] },
+      {
+        onSuccess: () => toast.success('Konfigurasi berhasil disimpan'),
+        onError:   () => toast.error('Gagal menyimpan konfigurasi'),
+      }
+    )
   }
 
   const handleTest = () => {
@@ -88,7 +100,6 @@ export default function WaSettingsPage() {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div>
         <h1 className="text-xl font-semibold">Pengaturan WhatsApp</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
@@ -96,15 +107,40 @@ export default function WaSettingsPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        {/* ── Panel Koneksi ── */}
+      {/* Tab bar */}
+      <div className="flex border-b border-border">
+        <button
+          onClick={() => setTab('status')}
+          className={cn(
+            'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors',
+            tab === 'status'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          )}
+        >
+          Status Koneksi
+        </button>
+        <button
+          onClick={() => setTab('konfigurasi')}
+          className={cn(
+            'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors',
+            tab === 'konfigurasi'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          )}
+        >
+          Konfigurasi
+        </button>
+      </div>
+
+      {/* ── Tab: Status Koneksi ── */}
+      {tab === 'status' && (
         <Card>
           <CardHeader>
             <CardTitle>Status Koneksi</CardTitle>
             <CardDescription>Perangkat WA yang digunakan untuk mengirim pesan</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
-            {/* Status badge */}
             <div className="flex items-center gap-3">
               <span className={cn('size-2.5 rounded-full shrink-0', statusColor[currentStatus])} />
               <span className="text-sm font-medium">{statusLabel[currentStatus]}</span>
@@ -113,7 +149,6 @@ export default function WaSettingsPage() {
               )}
             </div>
 
-            {/* QR Code */}
             {isQrReady && (
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">
@@ -139,7 +174,6 @@ export default function WaSettingsPage() {
               </div>
             )}
 
-            {/* Connected state */}
             {isConnected && (
               <div className="flex items-center gap-3 rounded-lg bg-green-50 p-4 dark:bg-green-950/20">
                 <Wifi className="size-5 text-green-600 shrink-0" />
@@ -152,7 +186,6 @@ export default function WaSettingsPage() {
               </div>
             )}
 
-            {/* Disconnected state */}
             {(currentStatus === 'disconnected' || currentStatus === 'unknown') && !statusLoading && (
               <div className="flex items-center gap-3 rounded-lg bg-red-50 p-4 dark:bg-red-950/20">
                 <WifiOff className="size-5 text-red-600 shrink-0" />
@@ -160,7 +193,6 @@ export default function WaSettingsPage() {
               </div>
             )}
 
-            {/* Actions */}
             <div className="flex gap-2 pt-1">
               <Button
                 variant="outline"
@@ -185,8 +217,10 @@ export default function WaSettingsPage() {
             </div>
           </CardContent>
         </Card>
+      )}
 
-        {/* ── Panel Konfigurasi ── */}
+      {/* ── Tab: Konfigurasi ── */}
+      {tab === 'konfigurasi' && (
         <Card>
           <CardHeader>
             <CardTitle>Konfigurasi Gateway</CardTitle>
@@ -249,15 +283,13 @@ export default function WaSettingsPage() {
               </p>
             )}
 
-            <div className="pt-1">
-              <Button onClick={handleSave} disabled={isSaving} size="sm">
-                <Save className="size-3.5" />
-                {isSaving ? 'Menyimpan...' : 'Simpan Konfigurasi'}
-              </Button>
-            </div>
+            <Button onClick={handleSave} disabled={isSaving} className="w-full">
+              <Save className="size-3.5" />
+              {isSaving ? 'Menyimpan...' : 'Simpan Konfigurasi'}
+            </Button>
           </CardContent>
         </Card>
-      </div>
+      )}
     </div>
   )
 }
