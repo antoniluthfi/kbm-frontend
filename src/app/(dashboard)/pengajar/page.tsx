@@ -11,6 +11,8 @@ import { getPengajarColumns } from '@/components/pengajar/pengajarColumns'
 import { DeleteDialog } from '@/components/ui/delete-dialog'
 import { Pagination } from '@/components/ui/pagination'
 import { Tab, Mode } from '@/types/common'
+import { ExportButton } from '@/components/ui/export-button'
+import { ImportButton } from '@/components/ui/import-button'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -132,9 +134,24 @@ export default function PengajarPage() {
               onChange={(e) => { setSearch(e.target.value); setPage(1) }}
               className="h-9 border border-border rounded-lg px-3 text-sm bg-background w-72 outline-none focus:border-ring transition-colors"
             />
-            <span className="ml-auto text-sm text-muted-foreground self-center">
-              {data?.total ?? 0} pengajar
-            </span>
+            <div className="ml-auto flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">{data?.total ?? 0} pengajar</span>
+              <ImportButton
+                templateUrl="/api/export/pengajar/template"
+                uploadUrl="/api/import/pengajar"
+                label="Import"
+                onSuccess={() => { setPage(1) }}
+              />
+              <ExportButton
+                excelUrl={`/api/export/pengajar?${new URLSearchParams({
+                  ...(search && { search }),
+                }).toString()}`}
+                pdfUrl={`/api/export/pengajar/pdf?${new URLSearchParams({
+                  ...(search && { search }),
+                }).toString()}`}
+                filePrefix="data-pengajar"
+              />
+            </div>
           </div>
 
           <DataTable columns={columns} data={data?.data ?? []} isLoading={isLoading} />

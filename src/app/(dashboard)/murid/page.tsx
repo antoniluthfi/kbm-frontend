@@ -10,6 +10,8 @@ import { MuridDetail } from '@/components/murid/MuridDetail'
 import { getMuridColumns, STATUS_LABEL } from '@/components/murid/muridColumns'
 import { DeleteDialog } from '@/components/ui/delete-dialog'
 import { Pagination } from '@/components/ui/pagination'
+import { ExportButton } from '@/components/ui/export-button'
+import { ImportButton } from '@/components/ui/import-button'
 import { Tab, Mode } from '@/types/common'
 import { getMuridFotoUrl, toFormData } from '@/lib/murid-utils'
 import { cn } from '@/lib/utils'
@@ -176,9 +178,32 @@ export default function MuridPage() {
                 className="h-9 w-24 border border-border rounded-lg px-3 text-sm bg-background outline-none focus:border-ring transition-colors"
               />
             </div>
-            <span className="ml-auto text-sm text-muted-foreground self-center">
-              {data?.total ?? 0} murid
-            </span>
+            <div className="ml-auto flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">{data?.total ?? 0} murid</span>
+              <ImportButton
+                templateUrl="/api/export/murid/template"
+                uploadUrl="/api/import/murid"
+                label="Import"
+                onSuccess={() => { setPage(1) }}
+              />
+              <ExportButton
+                excelUrl={`/api/export/murid?${new URLSearchParams({
+                  ...(search && { search }),
+                  ...(status && { status }),
+                  ...(kelasId && { kelas_id: String(kelasId) }),
+                  ...(usiaMin && { usia_min: usiaMin }),
+                  ...(usiaMax && { usia_max: usiaMax }),
+                }).toString()}`}
+                pdfUrl={`/api/export/murid/pdf?${new URLSearchParams({
+                  ...(search && { search }),
+                  ...(status && { status }),
+                  ...(kelasId && { kelas_id: String(kelasId) }),
+                  ...(usiaMin && { usia_min: usiaMin }),
+                  ...(usiaMax && { usia_max: usiaMax }),
+                }).toString()}`}
+                filePrefix="data-murid"
+              />
+            </div>
           </div>
 
           <DataTable columns={columns} data={data?.data ?? []} isLoading={isLoading} />
