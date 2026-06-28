@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useLogout } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, Users, GraduationCap, BookUser, LogOut, UserCircle, School, Layers, CalendarDays, ClipboardList, BookOpen, Wallet, Megaphone, Bell, Settings } from 'lucide-react'
+import { LayoutDashboard, Users, GraduationCap, BookUser, LogOut, UserCircle, School, Layers, CalendarDays, ClipboardList, BookOpen, Wallet, Megaphone, Bell, Settings, MessagesSquare } from 'lucide-react'
 
 const navItems = [
   {
@@ -67,6 +67,12 @@ const navItems = [
     label: 'Kas',
     icon: Wallet,
     roles: ['super_admin', 'pengajar'],
+  },
+  {
+    href: '/musyawarah',
+    label: 'Musyawarah',
+    icon: MessagesSquare,
+    roles: ['super_admin'],
   },
   {
     href: '/pengumuman',
